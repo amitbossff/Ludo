@@ -1,4 +1,3 @@
-// Firebase v12
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getDatabase, ref, set, update, onValue, get }
 from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
@@ -16,25 +15,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Sounds
-const diceSound = diceSoundEl();
-const moveSound = moveSoundEl();
-const cutSound = cutSoundEl();
-const winSound = winSoundEl();
-const bgMusic = bgMusicEl();
-
-function diceSoundEl(){return document.getElementById("diceSound")}
-function moveSoundEl(){return document.getElementById("moveSound")}
-function cutSoundEl(){return document.getElementById("cutSound")}
-function winSoundEl(){return document.getElementById("winSound")}
-function bgMusicEl(){return document.getElementById("bgMusic")}
+const diceSound = document.getElementById("diceSound");
+const moveSound = document.getElementById("moveSound");
+const cutSound  = document.getElementById("cutSound");
+const winSound  = document.getElementById("winSound");
+const bgMusic   = document.getElementById("bgMusic");
 
 window.unlockSound = () => {
   diceSound.play().then(()=>diceSound.pause());
   document.getElementById("soundUnlock").remove();
 };
 
-// Game vars
+window.toggleMusic = () => {
+  bgMusic.paused ? bgMusic.play() : bgMusic.pause();
+};
+
 let roomCode, myIndex = -1;
 const colors = ["red","green","yellow","blue"];
 let tokens = [];
@@ -43,10 +38,6 @@ const PATH = Array.from({length:52},(_,i)=>({
   x: 12 + (i % 13) * 23,
   y: 12 + Math.floor(i / 13) * 23
 }));
-
-window.toggleMusic = () => {
-  bgMusic.paused ? bgMusic.play() : bgMusic.pause();
-};
 
 window.createRoom = () => {
   roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
@@ -68,7 +59,7 @@ function joinGame(){
   get(ref(db,"rooms/"+roomCode)).then(s=>{
     const room=s.val();
     myIndex=room.players.findIndex(p=>!p.id);
-    if(myIndex==-1)return alert("Room Full");
+    if(myIndex===-1) return alert("Room Full");
     update(ref(db,`rooms/${roomCode}/players/${myIndex}`),{id:Date.now()});
     startGame();
   });
@@ -77,6 +68,7 @@ function joinGame(){
 function startGame(){
   menu.classList.add("hidden");
   game.classList.remove("hidden");
+
   const board=document.getElementById("board");
   board.innerHTML="";
   tokens=[];
@@ -98,7 +90,7 @@ function startGame(){
       const pos=data.players[t.player].pos;
       if(pos>=0 && PATH[pos]){
         t.el.style.left=PATH[pos].x+(t.player*4)+"px";
-        t.el.style.top=PATH[pos].y+(t.player*4)+"px";
+        t.el.style.top =PATH[pos].y+(t.player*4)+"px";
       }
     });
 
@@ -109,28 +101,26 @@ function startGame(){
   });
 }
 
-dice.onclick=rollDice;
+dice.onclick = rollDice;
 
 function rollDice(){
   get(ref(db,"rooms/"+roomCode)).then(s=>{
     const room=s.val();
-    if(room.turn!==myIndex)return;
+    if(room.turn!==myIndex) return;
 
     diceSound.play();
     const value=Math.floor(Math.random()*6)+1;
 
     let p=room.players[myIndex];
 
-    // HOME RULE
     if(p.pos===-1){
-      if(value===6)p.pos=0;
+      if(value===6) p.pos=0;
       else return nextTurn(room);
-    }else{
+    } else {
       p.pos+=value;
-      if(p.pos>=51){p.home=true;p.pos=51;}
+      if(p.pos>=51){ p.home=true; p.pos=51; }
     }
 
-    // CUT RULE
     room.players.forEach((op,i)=>{
       if(i!==myIndex && op.pos===p.pos && p.pos>0){
         update(ref(db,`rooms/${roomCode}/players/${i}`),{pos:-1});
@@ -151,4 +141,4 @@ function nextTurn(room){
   update(ref(db,"rooms/"+roomCode),{
     turn:(room.turn+1)%4
   });
-      }
+}
