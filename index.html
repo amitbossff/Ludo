@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Online Ludo</title>
+
+<!-- Phaser CDN -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  text-align: center;
+  font-family: Arial;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎲 Online Ludo</h2>
+
+<button onclick="createRoom()">Create Room</button>
+<input id="roomInput" placeholder="Room Code">
+<button onclick="joinRoom()">Join Room</button>
+
+<script src="firebase.js"></script>
+<script src="game.js"></script>
+
+</body>
+</html>
