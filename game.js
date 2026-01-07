@@ -1,104 +1,144 @@
-let roomCode = "";
-let playerId = Math.random().toString(36).substr(2, 5);
-let playerIndex = -1;
-let totalPlayers = 4;
+// 🔥 Firebase v12 imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+import { getDatabase, ref, set, update, onValue, get } 
+from "https://www.gstatic.com/firebasejs/12.7.0/firebase-database.js";
 
-const PATH = [
-  {x:50,y:300},{x:100,y:300},{x:150,y:300},{x:200,y:300},
-  {x:250,y:300},{x:300,y:300},{x:350,y:300},{x:400,y:300},
-  {x:450,y:300},{x:500,y:300},{x:550,y:300},
-  {x:550,y:250},{x:550,y:200},{x:550,y:150},{x:550,y:100},
-  {x:550,y:50},
-  {x:500,y:50},{x:450,y:50},{x:400,y:50},{x:350,y:50},
-  {x:300,y:50},{x:250,y:50},{x:200,y:50},{x:150,y:50},
-  {x:100,y:50},{x:50,y:50},
-  {x:50,y:100},{x:50,y:150},{x:50,y:200},{x:50,y:250}
-];
-
-const config = {
-  type: Phaser.AUTO,
-  width: 600,
-  height: 600,
-  backgroundColor: "#ffffff",
-  scene: { create }
+// ✅ Tumhara Firebase config (AS-IS)
+const firebaseConfig = {
+  apiKey: "AIzaSyAA1DAEu6KmaLTHw1EuUPJko58AOsITz0k",
+  authDomain: "amit-a7b1f.firebaseapp.com",
+  databaseURL: "https://amit-a7b1f-default-rtdb.firebaseio.com",
+  projectId: "amit-a7b1f",
+  storageBucket: "amit-a7b1f.firebasestorage.app",
+  messagingSenderId: "875229760738",
+  appId: "1:875229760738:web:3981228866e3e8fe00e2bb"
 };
 
-let game = new Phaser.Game(config);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// 🔊 Sounds
+const diceSound = document.getElementById("diceSound");
+const moveSound = document.getElementById("moveSound");
+const cutSound  = document.getElementById("cutSound");
+
+// 🎮 Game variables
+let roomCode;
+let myIndex = -1;
+const colors = ["red","green","yellow","blue"];
 let tokens = [];
 
-function create() {
-  let scene = this;
-  this.add.text(200, 10, "Online Ludo", { color: "#000" });
-
-  db.ref("rooms").on("value", snap => {
-    let data = snap.val();
-    if (!data || !data[roomCode]) return;
-
-    let room = data[roomCode];
-    tokens.forEach((t, i) => {
-      let pos = room.players[i].pos;
-      if (PATH[pos]) {
-        t.x = PATH[pos].x;
-        t.y = PATH[pos].y;
-      }
-    });
+// 🧭 Ludo path (simplified)
+const PATH = [];
+for (let i = 0; i < 52; i++) {
+  PATH.push({
+    x: 12 + (i % 13) * 23,
+    y: 12 + Math.floor(i / 13) * 23
   });
-
-  for (let i = 0; i < totalPlayers; i++) {
-    let t = this.add.circle(50, 300, 12, 0xff0000 + i * 2000);
-    tokens.push(t);
-  }
 }
 
+// 🏠 UI Buttons
+document.getElementById("createBtn").onclick = createRoom;
+document.getElementById("joinBtn").onclick = joinRoom;
+document.getElementById("dice").onclick = rollDice;
+
+// 🎲 Create Room
 function createRoom() {
-  roomCode = Math.random().toString(36).substr(2, 4);
+  roomCode = Math.random().toString(36).substr(2,4).toUpperCase();
   alert("Room Code: " + roomCode);
 
   let players = [];
-  for (let i = 0; i < totalPlayers; i++) {
-    players.push({ pos: 0 });
-  }
+  for (let i = 0; i < 4; i++) players.push({ pos: 0 });
 
-  db.ref("rooms/" + roomCode).set({
+  set(ref(db, "rooms/" + roomCode), {
     turn: 0,
-    players: players
+    players
   });
 
-  joinAsPlayer();
+  joinGame();
 }
 
+// 🚪 Join Room
 function joinRoom() {
   roomCode = document.getElementById("roomInput").value;
-  joinAsPlayer();
+  joinGame();
 }
 
-function joinAsPlayer() {
-  db.ref("rooms/" + roomCode).once("value", snap => {
+// 👤 Join Logic
+function joinGame() {
+  get(ref(db, "rooms/" + roomCode)).then(snap => {
     if (!snap.exists()) return alert("Room not found");
 
-    let room = snap.val();
-    playerIndex = room.players.findIndex(p => p.id === undefined);
+    const room = snap.val();
+    myIndex = room.players.findIndex(p => !p.id);
+    if (myIndex === -1) return alert("Room Full");
 
-    if (playerIndex === -1) return alert("Room Full");
+    update(ref(db, `rooms/${roomCode}/players/${myIndex}`), {
+      id: Date.now()
+    });
 
-    db.ref(`rooms/${roomCode}/players/${playerIndex}`).update({
-      id: playerId,
-      pos: 0
+    startGame();
+  });
+}
+
+// ▶️ Start Game
+function startGame() {
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  tokens = [];
+
+  for (let p = 0; p < 4; p++) {
+    for (let t = 0; t < 4; t++) {
+      const g = document.createElement("div");
+      g.className = "token " + colors[p];
+      board.appendChild(g);
+      tokens.push({ el: g, player: p });
+    }
+  }
+
+  onValue(ref(db, "rooms/" + roomCode), snap => {
+    const data = snap.val();
+    document.getElementById("turnText").innerText =
+      "Turn: " + colors[data.turn].toUpperCase();
+
+    tokens.forEach(tk => {
+      const pos = data.players[tk.player].pos;
+      if (PATH[pos]) {
+        tk.el.style.left = PATH[pos].x + "px";
+        tk.el.style.top  = PATH[pos].y + "px";
+      }
     });
   });
 }
 
+// 🎲 Roll Dice + SOUND + MOVE + CUT
 function rollDice() {
-  db.ref("rooms/" + roomCode).once("value", snap => {
-    let room = snap.val();
-    if (room.turn !== playerIndex) return;
+  get(ref(db, "rooms/" + roomCode)).then(snap => {
+    const room = snap.val();
+    if (room.turn !== myIndex) return;
 
-    let dice = Math.floor(Math.random() * 6) + 1;
-    let newPos = room.players[playerIndex].pos + dice;
+    diceSound.play(); // 🔊 Dice sound
 
-    db.ref(`rooms/${roomCode}`).update({
-      [`players/${playerIndex}/pos`]: newPos,
-      turn: (room.turn + 1) % totalPlayers
+    const dice = Math.floor(Math.random() * 6) + 1;
+    let newPos = room.players[myIndex].pos + dice;
+    if (newPos > 51) newPos = 51;
+
+    // ❌ CUT LOGIC
+    room.players.forEach((p, i) => {
+      if (i !== myIndex && p.pos === newPos) {
+        update(ref(db, `rooms/${roomCode}/players/${i}`), { pos: 0 });
+        cutSound.play(); // 🔊 Cut sound
+      }
+    });
+
+    moveSound.play(); // 🔊 Move sound
+
+    update(ref(db, "rooms/" + roomCode), {
+      [`players/${myIndex}/pos`]: newPos,
+      turn: (room.turn + 1) % 4
     });
   });
-  }
+}
