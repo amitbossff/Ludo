@@ -1,0 +1,67 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+.hidden { display: none; }
+
+#menu { padding-top: 40px; }
+
+button, input {
+  padding: 12px;
+  margin: 8px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: #22c55e;
+  font-weight: bold;
+}
+
+#topBar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+#dice {
+  width: 50px;
+  cursor: pointer;
+}
+
+#board {
+  width: 320px;
+  height: 320px;
+  margin: auto;
+  background-image: url("https://i.imgur.com/8QZ7Z5G.png");
+  background-size: cover;
+  position: relative;
+}
+
+.token {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  position: absolute;
+  border: 2px solid white;
+}
+
+.red { background: red; }
+.green { background: green; }
+.yellow { background: gold; }
+.blue { background: dodgerblue; }
+
+#soundUnlock {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  }
