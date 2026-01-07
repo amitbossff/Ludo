@@ -4,16 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Real Online Ludo</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<div id="soundUnlock">
+  <button onclick="unlockSound()">🔊 Tap to Start</button>
+</div>
+
 <div id="menu">
-  <h1>🎲 LUDO ONLINE</h1>
-  <button id="createBtn">Create Room</button><br>
+  <h1>🎲 REAL LUDO</h1>
+  <button onclick="createRoom()">Create Room</button><br>
   <input id="roomInput" placeholder="Room Code"><br>
-  <button id="joinBtn">Join Room</button>
+  <button onclick="joinRoom()">Join Room</button>
 </div>
 
 <div id="game" class="hidden">
@@ -21,15 +24,19 @@
     <span id="turnText"></span>
     <img id="dice" src="https://upload.wikimedia.org/wikipedia/commons/1/1b/Dice-1-b.svg">
   </div>
+
   <div id="board"></div>
+
+  <button id="musicBtn" onclick="toggleMusic()">🎵 Music</button>
 </div>
 
-<!-- 🔊 Sounds -->
+<!-- Sounds -->
 <audio id="diceSound" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3"></audio>
 <audio id="moveSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
 <audio id="cutSound"  src="https://assets.mixkit.co/active_storage/sfx/2747/2747-preview.mp3"></audio>
+<audio id="winSound"  src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"></audio>
+<audio id="bgMusic" loop src="https://assets.mixkit.co/active_storage/sfx/1230/1230-preview.mp3"></audio>
 
-<!-- 🔥 Firebase + Game -->
 <script type="module" src="game.js"></script>
 </body>
 </html>
